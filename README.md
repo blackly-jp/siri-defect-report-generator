@@ -124,5 +124,5 @@ Chu Yen Ly
 
 ---
 
-**Version**: 1.0.0  
+**Version**: 1.0.0 
 **Last Updated**: April 2026
