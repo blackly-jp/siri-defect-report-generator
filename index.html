@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siri Defect Report Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐛 Siri Defect Report Generator</h1>
+            <p class="subtitle">Generate standardized radar reports for Siri issues</p>
+        </header>
+
+        <form id="defectForm">
+            <!-- Title Information -->
+            <section class="form-section">
+                <h2>Report Title</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="locale">Locale</label>
+                        <input type="text" id="locale" value="en_US" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="feature">Feature Area</label>
+                        <input type="text" id="feature" value="LW" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="platform">Platform</label>
+                        <input type="text" id="platform" value="CarPlay" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="build">Build</label>
+                        <input type="text" id="build" value="24A333" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="domain">Domain</label>
+                        <input type="text" id="domain" placeholder="e.g., Music, ChatGPT" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="titleDescription">Issue Description (for title)</label>
+                    <input type="text" id="titleDescription" placeholder="Brief description of the issue" required>
+                    <button type="button" id="autoGenerateBtn" class="btn-secondary" style="margin-top: 10px;">Auto-Generate Summary & Results</button>
+                </div>
+            </section>
+
+            <!-- Test Case Information -->
+            <section class="form-section">
+                <h2>Scope of the Task</h2>
+                <div class="form-group">
+                    <label for="masterTestCase">Master Test Case</label>
+                    <input type="text" id="masterTestCase" placeholder="rdar://tsc/51222502">
+                </div>
+                <div class="form-group">
+                    <label for="testCase">Test Case</label>
+                    <input type="text" id="testCase" placeholder="rdar://stc/918561354">
+                </div>
+                <div class="form-group">
+                    <label for="serenityId">Serenity ID</label>
+                    <input type="text" id="serenityId" value="N/A">
+                </div>
+            </section>
+
+            <!-- Summary -->
+            <section class="form-section">
+                <h2>Summary</h2>
+                <div class="form-group">
+                    <label for="summary">Summary Description</label>
+                    <textarea id="summary" rows="3" placeholder="Detailed summary of the issue" required></textarea>
+                </div>
+            </section>
+
+            <!-- Steps to Reproduce -->
+            <section class="form-section">
+                <h2>Steps to Reproduce</h2>
+                <div class="form-group">
+                    <label for="prerequisite">Prerequisite Instruction & Context</label>
+                    <textarea id="prerequisite" rows="2" placeholder="e.g., CarPlay is connected and Apple Music is enabled." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="utterance">Utterance</label>
+                    <input type="text" id="utterance" placeholder="e.g., Play Taylor Swift" required>
+                </div>
+                <div class="form-group">
+                    <label for="timestamp">Timestamp</label>
+                    <input type="text" id="timestamp" placeholder="2026-04-27 10:56:03.622236+0900">
+                    <button type="button" id="generateTimestamp" class="btn-secondary">Generate Current Timestamp</button>
+                </div>
+            </section>
+
+            <!-- Results -->
+            <section class="form-section">
+                <h2>Results</h2>
+                <div class="form-group">
+                    <label for="actualResults">Actual Results</label>
+                    <textarea id="actualResults" rows="4" placeholder="Describe what actually happened" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="expectedResults">Expected Results</label>
+                    <textarea id="expectedResults" rows="4" placeholder="Describe what should have happened" required></textarea>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section class="form-section">
+                <h2>Configuration and Setup</h2>
+                <div class="form-group">
+                    <label for="deviceModel">Device Model</label>
+                    <input type="text" id="deviceModel" value="iPhone 16 (D47)" required>
+                </div>
+                <div class="form-group">
+                    <label for="clientBuild">Client Build</label>
+                    <input type="text" id="clientBuild" value="24A333" required>
+                </div>
+                <div class="form-group">
+                    <label for="server">Server</label>
+                    <input type="text" id="server" value="https://qa.siri.apple.com (26.18)" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deviceLanguage">Device Language</label>
+                        <input type="text" id="deviceLanguage" value="en-US" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="region">Region</label>
+                        <input type="text" id="region" value="US" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="actualLocation">Actual Location</label>
+                        <input type="text" id="actualLocation" value="Yokohama, Japan" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="simulatedLocation">Simulated Location</label>
+                        <input type="text" id="simulatedLocation" value="New York, United States" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <button type="submit" class="btn-primary">Generate Report</button>
+                <button type="button" id="resetForm" class="btn-secondary">Reset Form</button>
+            </div>
+        </form>
+
+        <!-- Output Section -->
+        <section id="outputSection" class="output-section" style="display: none;">
+            <div class="output-header">
+                <h2>Generated Report</h2>
+                <div class="button-group">
+                    <button id="copyReport" class="btn-primary">Copy to Clipboard</button>
+                    <button id="downloadReport" class="btn-secondary">Download as .md</button>
+                    <button id="createAnother" class="btn-secondary">Create Another</button>
+                </div>
+            </div>
+            <pre id="reportOutput" class="report-output"></pre>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
