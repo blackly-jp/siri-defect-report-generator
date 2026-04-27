@@ -1,4 +1,5 @@
 # 🐛 Siri Defect Report Generator
+https://blackly-jp.github.io/siri-defect-report-generator/
 
 A web-based application for generating standardized radar reports for Siri issues. This tool helps QA engineers and testers quickly create consistent, well-formatted defect reports following the Apple Siri testing template.
 
@@ -118,7 +119,8 @@ For issues or questions about the Siri defect report format, refer to the intern
 
 ## License
 
-Internal tool for Apple Siri QA testing.
+Chu Yen Ly 
+
 
 ---
 
