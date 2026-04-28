@@ -185,7 +185,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Generate natural language descriptions using ChatGPT API via Vercel backend
     async function generateWithChatGPT(issueDesc, domain, utterance, apiKey) {
-        console.log('Calling AI API with:', { issueDesc, domain, utterance });
+        console.log('=== Starting AI Generation ===');
+        console.log('Issue:', issueDesc);
+        console.log('Domain:', domain);
+        console.log('Utterance:', utterance);
+        console.log('API Key (first 10 chars):', apiKey.substring(0, 10) + '...');
         
         // Determine API endpoint based on environment
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
@@ -193,29 +197,52 @@ document.addEventListener('DOMContentLoaded', function() {
             ? 'http://localhost:3000/api/generate'  // For local development
             : '/api/generate';  // For Vercel deployment
         
-        const response = await fetch(apiEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                issueDesc,
-                domain,
-                utterance,
-                apiKey
-            })
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            console.error('API Error:', error);
-            throw new Error(error.error || 'API request failed');
-        }
-
-        const result = await response.json();
-        console.log('AI Response:', result);
+        console.log('Using API endpoint:', apiEndpoint);
+        console.log('Is local?', isLocal);
+        console.log('Current location:', window.location.href);
         
-        return result;
+        try {
+            const response = await fetch(apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    issueDesc,
+                    domain,
+                    utterance,
+                    apiKey
+                })
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response ok?', response.ok);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                let errorMessage;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.error || 'API request failed';
+                } catch (e) {
+                    errorMessage = errorText || 'API request failed';
+                }
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            console.log('=== AI Response Success ===');
+            console.log('Result:', result);
+            
+            return result;
+        } catch (error) {
+            console.error('=== AI Generation Error ===');
+            console.error('Error type:', error.name);
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+            throw error;
+        }
     }
 
     // Generate timestamp in the required format
