@@ -70,45 +70,69 @@ document.addEventListener('DOMContentLoaded', function() {
     // Generate varied Actual Results descriptions
     function generateActualResults(issueDesc, domain, utterance) {
         const templates = [
-            `When the user invoked Siri${utterance ? ` with the utterance "${utterance}"` : ''}, ${issueDesc.toLowerCase()}.`,
-            `Upon ${utterance ? `requesting "${utterance}"` : 'invoking Siri'}, the system exhibited the following behavior: ${issueDesc.toLowerCase()}.`,
-            `The user attempted to ${utterance ? `use Siri to "${utterance}"` : 'interact with Siri'}${domain ? ` in the ${domain} domain` : ''}, however ${issueDesc.toLowerCase()}.`,
+            `When the user invoked Siri${utterance ? ` with the utterance "${utterance}"` : ''}${domain ? ` in the ${domain} domain` : ''}, ${issueDesc.toLowerCase()}.`,
+            `Upon ${utterance ? `requesting "${utterance}"` : 'invoking Siri'}${domain ? ` for ${domain} functionality` : ''}, the system exhibited the following behavior: ${issueDesc.toLowerCase()}.`,
+            `The user attempted to ${utterance ? `use Siri to "${utterance}"` : 'interact with Siri'}${domain ? ` within the ${domain} context` : ''}, however ${issueDesc.toLowerCase()}.`,
             `During testing${domain ? ` of ${domain} functionality` : ''}, ${issueDesc.toLowerCase()} when ${utterance ? `the utterance "${utterance}" was used` : 'Siri was invoked'}.`,
-            `${issueDesc.charAt(0).toUpperCase() + issueDesc.slice(1).toLowerCase()}${utterance ? ` after the user said "${utterance}"` : ' during the Siri interaction'}.`
+            `${issueDesc.charAt(0).toUpperCase() + issueDesc.slice(1).toLowerCase()}${utterance ? ` after the user said "${utterance}"` : ' during the Siri interaction'}${domain ? ` in ${domain}` : ''}.`,
+            `While testing${domain ? ` ${domain} features` : ' Siri functionality'}, the user ${utterance ? `spoke "${utterance}"` : 'invoked Siri'} and observed that ${issueDesc.toLowerCase()}.`,
+            `The test scenario involved ${utterance ? `speaking "${utterance}"` : 'invoking Siri'}${domain ? ` to access ${domain}` : ''}, which resulted in ${issueDesc.toLowerCase()}.`,
+            `In the course of ${domain ? `${domain} ` : ''}testing, ${utterance ? `the command "${utterance}" was issued` : 'Siri was activated'}, leading to ${issueDesc.toLowerCase()}.`,
+            `${issueDesc.charAt(0).toUpperCase() + issueDesc.slice(1).toLowerCase()} when ${utterance ? `"${utterance}" was spoken` : 'the user interacted with Siri'}${domain ? ` in the ${domain} domain` : ''}.`,
+            `After ${utterance ? `issuing the command "${utterance}"` : 'activating Siri'}${domain ? ` for ${domain}` : ''}, it was observed that ${issueDesc.toLowerCase()}.`,
+            `The user ${utterance ? `requested "${utterance}"` : 'engaged with Siri'}${domain ? ` in ${domain}` : ''}, but ${issueDesc.toLowerCase()}.`,
+            `Testing revealed that ${issueDesc.toLowerCase()} when ${utterance ? `the utterance "${utterance}" was provided` : 'Siri was invoked'}${domain ? ` in the ${domain} context` : ''}.`,
+            `${utterance ? `The utterance "${utterance}" was spoken` : 'Siri was activated'}${domain ? ` to test ${domain} functionality` : ''}, resulting in ${issueDesc.toLowerCase()}.`,
+            `During ${domain ? `${domain} ` : ''}interaction, ${utterance ? `saying "${utterance}"` : 'invoking Siri'} caused ${issueDesc.toLowerCase()}.`,
+            `The system ${issueDesc.toLowerCase()} following ${utterance ? `the user's request "${utterance}"` : 'Siri invocation'}${domain ? ` in ${domain}` : ''}.`,
+            `When attempting to ${utterance ? `"${utterance}"` : 'use Siri'}${domain ? ` for ${domain}` : ''}, the observed behavior was that ${issueDesc.toLowerCase()}.`,
+            `${issueDesc.charAt(0).toUpperCase() + issueDesc.slice(1).toLowerCase()} upon ${utterance ? `speaking "${utterance}"` : 'Siri activation'}${domain ? ` within ${domain}` : ''}.`,
+            `The defect manifested when ${utterance ? `the user said "${utterance}"` : 'Siri was invoked'}${domain ? ` in the ${domain} domain` : ''}, as ${issueDesc.toLowerCase()}.`,
+            `${domain ? `${domain} functionality was tested by ` : 'The user '}${utterance ? `saying "${utterance}"` : 'invoking Siri'}, which led to ${issueDesc.toLowerCase()}.`,
+            `Reproduction steps included ${utterance ? `speaking "${utterance}"` : 'activating Siri'}${domain ? ` in ${domain}` : ''}, after which ${issueDesc.toLowerCase()}.`,
+            `${issueDesc.charAt(0).toUpperCase() + issueDesc.slice(1).toLowerCase()} was observed when ${utterance ? `"${utterance}" was the input` : 'Siri was engaged'}${domain ? ` for ${domain}` : ''}.`,
+            `The issue occurred ${utterance ? `following the utterance "${utterance}"` : 'after Siri invocation'}${domain ? ` in the ${domain} context` : ''}, where ${issueDesc.toLowerCase()}.`,
+            `${utterance ? `Speaking "${utterance}"` : 'Invoking Siri'}${domain ? ` to access ${domain}` : ''} resulted in the following: ${issueDesc.toLowerCase()}.`,
+            `The user experience was that ${issueDesc.toLowerCase()} when ${utterance ? `requesting "${utterance}"` : 'using Siri'}${domain ? ` in ${domain}` : ''}.`,
+            `${domain ? `In the ${domain} domain, ` : ''}${utterance ? `the command "${utterance}" triggered` : 'Siri invocation caused'} ${issueDesc.toLowerCase()}.`
         ];
         
-        // Select a template based on what information is available
-        let selectedTemplate;
-        if (utterance && domain) {
-            selectedTemplate = templates[Math.floor(Math.random() * templates.length)];
-        } else if (utterance) {
-            selectedTemplate = templates[0];
-        } else if (domain) {
-            selectedTemplate = templates[2];
-        } else {
-            selectedTemplate = templates[4];
-        }
-        
-        return selectedTemplate;
+        // Always return a random template regardless of available information
+        return templates[Math.floor(Math.random() * templates.length)];
     }
     
     // Generate varied Expected Results descriptions
     function generateExpectedResults(domain, utterance) {
-        if (domain && utterance) {
-            const templates = [
-                `Siri should successfully process the request "${utterance}" and provide the appropriate ${domain} response without errors or delays.`,
-                `The expected behavior is for Siri to correctly interpret "${utterance}" and deliver the requested ${domain} content promptly.`,
-                `Siri should respond to "${utterance}" by providing accurate ${domain} information in a timely manner.`,
-                `Upon receiving the utterance "${utterance}", Siri should successfully execute the ${domain} request and return the expected results.`
-            ];
-            return templates[Math.floor(Math.random() * templates.length)];
-        } else if (domain) {
-            return `Siri should successfully process the ${domain} request and provide the expected response without errors.`;
-        } else if (utterance) {
-            return `Siri should correctly interpret and respond to the utterance "${utterance}" with the appropriate action or information.`;
-        } else {
-            return `Siri should successfully process the user's request and provide the expected response in a timely manner.`;
-        }
+        const templates = [
+            `Siri should successfully process the request${utterance ? ` "${utterance}"` : ''} and provide the appropriate${domain ? ` ${domain}` : ''} response without errors or delays.`,
+            `The expected behavior is for Siri to correctly interpret${utterance ? ` "${utterance}"` : ' the request'} and deliver the requested${domain ? ` ${domain}` : ''} content promptly.`,
+            `Siri should respond${utterance ? ` to "${utterance}"` : ''} by providing accurate${domain ? ` ${domain}` : ''} information in a timely manner.`,
+            `Upon receiving${utterance ? ` the utterance "${utterance}"` : ' the request'}, Siri should successfully execute the${domain ? ` ${domain}` : ''} request and return the expected results.`,
+            `The system should properly handle${utterance ? ` "${utterance}"` : ' the request'} and present the relevant${domain ? ` ${domain}` : ''} data to the user.`,
+            `Siri is expected to recognize${utterance ? ` "${utterance}"` : ' the request'} and fulfill the${domain ? ` ${domain}` : ''} request without issues.`,
+            `When the user${utterance ? ` says "${utterance}"` : ' makes a request'}, Siri should seamlessly provide the${domain ? ` ${domain}` : ''} functionality as designed.`,
+            `The anticipated outcome is that${utterance ? ` "${utterance}"` : ' the request'} triggers the correct${domain ? ` ${domain}` : ''} response from Siri.`,
+            `Siri should interpret${utterance ? ` "${utterance}"` : ' the request'} accurately and execute the corresponding${domain ? ` ${domain}` : ''} action successfully.`,
+            `The expected result is for Siri to process${utterance ? ` "${utterance}"` : ' the request'} and deliver${domain ? ` ${domain}` : ''} content without errors.`,
+            `Upon hearing${utterance ? ` "${utterance}"` : ' the request'}, Siri should respond with the appropriate${domain ? ` ${domain}` : ''} information immediately.`,
+            `Siri should successfully understand${utterance ? ` "${utterance}"` : ' the request'} and provide the requested${domain ? ` ${domain}` : ''} functionality.`,
+            `The system is expected to handle${utterance ? ` "${utterance}"` : ' the request'} correctly and return${domain ? ` ${domain}` : ''} results as intended.`,
+            `When${utterance ? ` "${utterance}" is spoken` : ' the request is made'}, Siri should execute the${domain ? ` ${domain}` : ''} request and provide accurate results.`,
+            `Siri should properly recognize and respond${utterance ? ` to "${utterance}"` : ''} with the correct${domain ? ` ${domain}` : ''} output.`,
+            `The expected behavior includes Siri processing${utterance ? ` "${utterance}"` : ' the request'} and delivering${domain ? ` ${domain}` : ''} content efficiently.`,
+            `Upon receiving${utterance ? ` "${utterance}"` : ' the request'}, the system should provide${domain ? ` ${domain}` : ''} functionality without delays or errors.`,
+            `Siri is expected to successfully interpret${utterance ? ` "${utterance}"` : ' the request'} and present${domain ? ` ${domain}` : ''} information to the user.`,
+            `The correct behavior is for Siri to handle${utterance ? ` "${utterance}"` : ' the request'} and execute the${domain ? ` ${domain}` : ''} request seamlessly.`,
+            `When the user${utterance ? ` requests "${utterance}"` : ' makes a request'}, Siri should provide${domain ? ` ${domain}` : ''} results in a timely and accurate manner.`,
+            `Siri should respond appropriately${utterance ? ` to "${utterance}"` : ''} by delivering the expected${domain ? ` ${domain}` : ''} functionality.`,
+            `The system should correctly process${utterance ? ` "${utterance}"` : ' the request'} and return${domain ? ` ${domain}` : ''} content as per specifications.`,
+            `Upon${utterance ? ` "${utterance}" being spoken` : ' receiving the request'}, Siri should successfully provide${domain ? ` ${domain}` : ''} information without issues.`,
+            `Siri is expected to handle${utterance ? ` "${utterance}"` : ' the request'} efficiently and deliver the requested${domain ? ` ${domain}` : ''} content.`,
+            `The anticipated result is that Siri processes${utterance ? ` "${utterance}"` : ' the request'} and provides${domain ? ` ${domain}` : ''} functionality correctly.`
+        ];
+        
+        // Always return a random template regardless of available information
+        return templates[Math.floor(Math.random() * templates.length)];
     }
     
     // Generate natural language descriptions using ChatGPT API via Vercel backend
