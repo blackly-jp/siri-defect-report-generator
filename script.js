@@ -19,11 +19,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const utteranceField = document.getElementById('utterance');
     const autoGenerateBtn = document.getElementById('autoGenerateBtn');
     const apiKeyField = document.getElementById('apiKey');
+    const testApiKeyBtn = document.getElementById('testApiKey');
+    const apiKeyStatus = document.getElementById('apiKeyStatus');
     
     // Load API key from localStorage
     const savedApiKey = localStorage.getItem('openai_api_key');
     if (savedApiKey) {
         apiKeyField.value = savedApiKey;
+        showApiKeyStatus('✓ API Key loaded from storage', 'success');
     }
     
     // Save API key when it changes
@@ -33,27 +36,100 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Test API Key button
+    testApiKeyBtn.addEventListener('click', async function() {
+        const apiKey = apiKeyField.value.trim();
+        
+        if (!apiKey) {
+            showApiKeyStatus('⚠️ Please enter an API key first', 'error');
+            return;
+        }
+        
+        testApiKeyBtn.disabled = true;
+        testApiKeyBtn.textContent = 'Testing...';
+        showApiKeyStatus('🔄 Testing API key...', 'info');
+        
+        try {
+            const isValid = await testOpenAIKey(apiKey);
+            if (isValid) {
+                localStorage.setItem('openai_api_key', apiKey);
+                showApiKeyStatus('✅ API Key is valid and working!', 'success');
+            } else {
+                showApiKeyStatus('❌ API Key is invalid or expired', 'error');
+            }
+        } catch (error) {
+            showApiKeyStatus('❌ Error: ' + error.message, 'error');
+        } finally {
+            testApiKeyBtn.disabled = false;
+            testApiKeyBtn.textContent = 'Test API Key';
+        }
+    });
+    
+    // Show API key status message
+    function showApiKeyStatus(message, type) {
+        apiKeyStatus.style.display = 'block';
+        apiKeyStatus.textContent = message;
+        apiKeyStatus.style.padding = '10px';
+        apiKeyStatus.style.borderRadius = '6px';
+        apiKeyStatus.style.fontWeight = '600';
+        
+        if (type === 'success') {
+            apiKeyStatus.style.background = '#d4edda';
+            apiKeyStatus.style.color = '#155724';
+            apiKeyStatus.style.border = '1px solid #c3e6cb';
+        } else if (type === 'error') {
+            apiKeyStatus.style.background = '#f8d7da';
+            apiKeyStatus.style.color = '#721c24';
+            apiKeyStatus.style.border = '1px solid #f5c6cb';
+        } else {
+            apiKeyStatus.style.background = '#d1ecf1';
+            apiKeyStatus.style.color = '#0c5460';
+            apiKeyStatus.style.border = '1px solid #bee5eb';
+        }
+    }
+    
+    // Test OpenAI API Key
+    async function testOpenAIKey(apiKey) {
+        try {
+            const response = await fetch('https://api.openai.com/v1/models', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`
+                }
+            });
+            
+            return response.ok;
+        } catch (error) {
+            throw new Error('Network error: ' + error.message);
+        }
+    }
+    
     // Auto-generate button click
     autoGenerateBtn.addEventListener('click', async function() {
         const apiKey = apiKeyField.value.trim();
         
-        if (!apiKey) {
-            alert('Please enter your OpenAI API Key first.');
-            return;
-        }
-        
         autoGenerateBtn.disabled = true;
-        autoGenerateBtn.textContent = 'Generating with AI...';
         
-        try {
-            await autoGenerateFields(true, apiKey);
-            showSuccessMessage('Fields auto-generated successfully with AI!');
-        } catch (error) {
-            alert('Error generating with AI: ' + error.message);
-        } finally {
-            autoGenerateBtn.disabled = false;
-            autoGenerateBtn.textContent = 'Auto-Generate Summary & Results';
+        if (apiKey) {
+            // Use AI generation if API key is provided
+            autoGenerateBtn.textContent = 'Generating with AI...';
+            try {
+                await autoGenerateFields(true, apiKey);
+                showSuccessMessage('Fields auto-generated successfully with AI!');
+            } catch (error) {
+                console.error('AI generation failed:', error);
+                showSuccessMessage('AI failed, using simple generation instead.');
+                await autoGenerateFields(true, null);
+            }
+        } else {
+            // Use simple generation if no API key
+            autoGenerateBtn.textContent = 'Generating...';
+            await autoGenerateFields(true, null);
+            showSuccessMessage('Fields auto-generated successfully!');
         }
+        
+        autoGenerateBtn.disabled = false;
+        autoGenerateBtn.textContent = 'Auto-Generate Summary & Results';
     });
     
     // Auto-fill when Issue Description changes (blur event)
@@ -107,64 +183,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Generate natural language descriptions using ChatGPT API
+    // Generate natural language descriptions using ChatGPT API via Vercel backend
     async function generateWithChatGPT(issueDesc, domain, utterance, apiKey) {
-        const prompt = `You are a QA engineer writing a defect report for Siri testing. Based on the following information, generate professional, clear descriptions:
-
-Issue: ${issueDesc}
-Domain: ${domain || 'N/A'}
-Utterance: ${utterance || 'N/A'}
-
-Please provide:
-1. Summary: A concise one-sentence summary of the issue
-2. Actual Results: A detailed description of what actually happened (the bug/issue)
-3. Expected Results: A detailed description of what should have happened
-
-Format your response as JSON:
-{
-  "summary": "...",
-  "actualResults": "...",
-  "expectedResults": "..."
-}`;
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        console.log('Calling AI API with:', { issueDesc, domain, utterance });
+        
+        // Determine API endpoint based on environment
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+        const apiEndpoint = isLocal
+            ? 'http://localhost:3000/api/generate'  // For local development
+            : '/api/generate';  // For Vercel deployment
+        
+        const response = await fetch(apiEndpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are a professional QA engineer specializing in Siri testing. Generate clear, concise, and professional defect report descriptions.'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                temperature: 0.7,
-                max_tokens: 500
+                issueDesc,
+                domain,
+                utterance,
+                apiKey
             })
         });
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error?.message || 'API request failed');
+            console.error('API Error:', error);
+            throw new Error(error.error || 'API request failed');
         }
 
-        const data = await response.json();
-        const content = data.choices[0].message.content;
+        const result = await response.json();
+        console.log('AI Response:', result);
         
-        // Parse JSON response
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-        
-        throw new Error('Failed to parse ChatGPT response');
+        return result;
     }
 
     // Generate timestamp in the required format
