@@ -88,14 +88,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Test OpenAI API Key
+    // Test Google Gemini API Key
     async function testOpenAIKey(apiKey) {
         try {
-            const response = await fetch('https://api.openai.com/v1/models', {
-                method: 'GET',
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${apiKey}`
-                }
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: 'Hello'
+                        }]
+                    }]
+                })
             });
             
             return response.ok;
