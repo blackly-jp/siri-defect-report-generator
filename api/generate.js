@@ -56,8 +56,7 @@ Format your response ONLY as valid JSON with no additional text:
       }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 500,
-        responseMimeType: "application/json"
+        maxOutputTokens: 500
       }
     });
 
