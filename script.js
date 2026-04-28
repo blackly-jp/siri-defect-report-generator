@@ -18,121 +18,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const domainField = document.getElementById('domain');
     const utteranceField = document.getElementById('utterance');
     const autoGenerateBtn = document.getElementById('autoGenerateBtn');
-    const apiKeyField = document.getElementById('apiKey');
-    const testApiKeyBtn = document.getElementById('testApiKey');
-    const apiKeyStatus = document.getElementById('apiKeyStatus');
-    
-    // Load API key from localStorage
-    const savedApiKey = localStorage.getItem('openai_api_key');
-    if (savedApiKey) {
-        apiKeyField.value = savedApiKey;
-        showApiKeyStatus('✓ API Key loaded from storage', 'success');
-    }
-    
-    // Save API key when it changes
-    apiKeyField.addEventListener('blur', function() {
-        if (apiKeyField.value.trim()) {
-            localStorage.setItem('openai_api_key', apiKeyField.value.trim());
-        }
-    });
-    
-    // Test API Key button
-    testApiKeyBtn.addEventListener('click', async function() {
-        const apiKey = apiKeyField.value.trim();
-        
-        if (!apiKey) {
-            showApiKeyStatus('⚠️ Please enter an API key first', 'error');
-            return;
-        }
-        
-        testApiKeyBtn.disabled = true;
-        testApiKeyBtn.textContent = 'Testing...';
-        showApiKeyStatus('🔄 Testing API key...', 'info');
-        
-        try {
-            const isValid = await testOpenAIKey(apiKey);
-            if (isValid) {
-                localStorage.setItem('openai_api_key', apiKey);
-                showApiKeyStatus('✅ API Key is valid and working!', 'success');
-            } else {
-                showApiKeyStatus('❌ API Key is invalid or expired', 'error');
-            }
-        } catch (error) {
-            showApiKeyStatus('❌ Error: ' + error.message, 'error');
-        } finally {
-            testApiKeyBtn.disabled = false;
-            testApiKeyBtn.textContent = 'Test API Key';
-        }
-    });
-    
-    // Show API key status message
-    function showApiKeyStatus(message, type) {
-        apiKeyStatus.style.display = 'block';
-        apiKeyStatus.textContent = message;
-        apiKeyStatus.style.padding = '10px';
-        apiKeyStatus.style.borderRadius = '6px';
-        apiKeyStatus.style.fontWeight = '600';
-        
-        if (type === 'success') {
-            apiKeyStatus.style.background = '#d4edda';
-            apiKeyStatus.style.color = '#155724';
-            apiKeyStatus.style.border = '1px solid #c3e6cb';
-        } else if (type === 'error') {
-            apiKeyStatus.style.background = '#f8d7da';
-            apiKeyStatus.style.color = '#721c24';
-            apiKeyStatus.style.border = '1px solid #f5c6cb';
-        } else {
-            apiKeyStatus.style.background = '#d1ecf1';
-            apiKeyStatus.style.color = '#0c5460';
-            apiKeyStatus.style.border = '1px solid #bee5eb';
-        }
-    }
-    
-    // Test Google Gemini API Key
-    async function testOpenAIKey(apiKey) {
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: 'Hello'
-                        }]
-                    }]
-                })
-            });
-            
-            return response.ok;
-        } catch (error) {
-            throw new Error('Network error: ' + error.message);
-        }
-    }
     
     // Auto-generate button click
     autoGenerateBtn.addEventListener('click', async function() {
-        const apiKey = apiKeyField.value.trim();
-        
         autoGenerateBtn.disabled = true;
+        autoGenerateBtn.textContent = 'Generating...';
         
-        if (apiKey) {
-            // Use AI generation if API key is provided
-            autoGenerateBtn.textContent = 'Generating with AI...';
-            try {
-                await autoGenerateFields(true, apiKey);
-                showSuccessMessage('Fields auto-generated successfully with AI!');
-            } catch (error) {
-                console.error('AI generation failed:', error);
-                showSuccessMessage('AI failed, using simple generation instead.');
-                await autoGenerateFields(true, null);
-            }
-        } else {
-            // Use simple generation if no API key
-            autoGenerateBtn.textContent = 'Generating...';
-            await autoGenerateFields(true, null);
+        try {
+            await autoGenerateFields(true);
             showSuccessMessage('Fields auto-generated successfully!');
+        } catch (error) {
+            console.error('Generation error:', error);
+            alert('Generation failed: ' + error.message);
         }
         
         autoGenerateBtn.disabled = false;
@@ -154,39 +51,63 @@ document.addEventListener('DOMContentLoaded', function() {
         const domain = domainField.value.trim();
         const utterance = utteranceField.value.trim();
         
-        // If API key is provided, use ChatGPT to generate natural language
-        if (apiKey && forceOverwrite) {
-            try {
-                const results = await generateWithChatGPT(issueDesc, domain, utterance, apiKey);
-                
-                summaryField.value = results.summary;
-                actualResultsField.value = results.actualResults;
-                expectedResultsField.value = results.expectedResults;
-                
-                return;
-            } catch (error) {
-                console.error('ChatGPT generation failed:', error);
-                // Fall back to simple generation
-            }
-        }
-        
-        // Simple auto-fill (fallback or when no API key)
+        // Generate Summary
         if (!summaryField.value.trim() || forceOverwrite) {
             summaryField.value = issueDesc + '.';
         }
         
+        // Generate Actual Results with varied templates
         if (!actualResultsField.value.trim() || forceOverwrite) {
-            actualResultsField.value = issueDesc + '.';
+            actualResultsField.value = generateActualResults(issueDesc, domain, utterance);
         }
         
+        // Generate Expected Results
         if (!expectedResultsField.value.trim() || forceOverwrite) {
-            if (domain && utterance) {
-                expectedResultsField.value = `Siri should successfully process the request "${utterance}" and provide the expected ${domain} response.`;
-            } else if (domain) {
-                expectedResultsField.value = `Siri should successfully process the ${domain} request and provide the expected response.`;
-            } else {
-                expectedResultsField.value = `Siri should successfully process the request and provide the expected response.`;
-            }
+            expectedResultsField.value = generateExpectedResults(domain, utterance);
+        }
+    }
+    
+    // Generate varied Actual Results descriptions
+    function generateActualResults(issueDesc, domain, utterance) {
+        const templates = [
+            `When the user invoked Siri${utterance ? ` with the utterance "${utterance}"` : ''}, ${issueDesc.toLowerCase()}.`,
+            `Upon ${utterance ? `requesting "${utterance}"` : 'invoking Siri'}, the system exhibited the following behavior: ${issueDesc.toLowerCase()}.`,
+            `The user attempted to ${utterance ? `use Siri to "${utterance}"` : 'interact with Siri'}${domain ? ` in the ${domain} domain` : ''}, however ${issueDesc.toLowerCase()}.`,
+            `During testing${domain ? ` of ${domain} functionality` : ''}, ${issueDesc.toLowerCase()} when ${utterance ? `the utterance "${utterance}" was used` : 'Siri was invoked'}.`,
+            `${issueDesc.charAt(0).toUpperCase() + issueDesc.slice(1).toLowerCase()}${utterance ? ` after the user said "${utterance}"` : ' during the Siri interaction'}.`
+        ];
+        
+        // Select a template based on what information is available
+        let selectedTemplate;
+        if (utterance && domain) {
+            selectedTemplate = templates[Math.floor(Math.random() * templates.length)];
+        } else if (utterance) {
+            selectedTemplate = templates[0];
+        } else if (domain) {
+            selectedTemplate = templates[2];
+        } else {
+            selectedTemplate = templates[4];
+        }
+        
+        return selectedTemplate;
+    }
+    
+    // Generate varied Expected Results descriptions
+    function generateExpectedResults(domain, utterance) {
+        if (domain && utterance) {
+            const templates = [
+                `Siri should successfully process the request "${utterance}" and provide the appropriate ${domain} response without errors or delays.`,
+                `The expected behavior is for Siri to correctly interpret "${utterance}" and deliver the requested ${domain} content promptly.`,
+                `Siri should respond to "${utterance}" by providing accurate ${domain} information in a timely manner.`,
+                `Upon receiving the utterance "${utterance}", Siri should successfully execute the ${domain} request and return the expected results.`
+            ];
+            return templates[Math.floor(Math.random() * templates.length)];
+        } else if (domain) {
+            return `Siri should successfully process the ${domain} request and provide the expected response without errors.`;
+        } else if (utterance) {
+            return `Siri should correctly interpret and respond to the utterance "${utterance}" with the appropriate action or information.`;
+        } else {
+            return `Siri should successfully process the user's request and provide the expected response in a timely manner.`;
         }
     }
     
