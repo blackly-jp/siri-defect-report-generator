@@ -1,11 +1,11 @@
 # 🐛 Siri Defect Report Generator
-https://blackly-jp.github.io/siri-defect-report-generator/
 
 A web-based application for generating standardized radar reports for Siri issues. This tool helps QA engineers and testers quickly create consistent, well-formatted defect reports following the Apple Siri testing template.
 
 ## Features
 
 ✨ **Easy-to-use Interface** - Clean, intuitive form with all necessary fields
+🤖 **AI-Powered Generation** - Uses ChatGPT to generate professional, natural language descriptions
 📋 **Template-based Generation** - Follows the standard Siri defect report format
 ⏰ **Auto Timestamp** - Automatically generates timestamps in the correct format
 📥 **Export Options** - Copy to clipboard or download as .md file
@@ -80,12 +80,47 @@ Siri's orb was revolving forever when asking ChatGPT to generate a poem of the d
 ...
 ```
 
+## AI-Powered Generation
+
+### How to Use ChatGPT Integration
+
+1. **Get an OpenAI API Key**
+   - Visit https://platform.openai.com/api-keys
+   - Create a new API key
+   - Copy the key (starts with `sk-`)
+
+2. **Enter Your API Key**
+   - Paste your API key in the "OpenAI API Key" field at the top of the form
+   - The key is saved locally in your browser for future use
+
+3. **Generate with AI**
+   - Fill in the Issue Description, Domain, and Utterance fields
+   - Click "Auto-Generate Summary & Results"
+   - The AI will generate professional, natural language descriptions for:
+     - Summary
+     - Actual Results
+     - Expected Results
+
+### Benefits of AI Generation
+
+- **Professional Language**: Generates clear, concise technical descriptions
+- **Consistency**: Maintains consistent tone across all reports
+- **Time-Saving**: Automatically rephrases your issue description into proper report format
+- **Natural Flow**: Creates readable, well-structured sentences
+
+### Privacy & Security
+
+- Your API key is stored locally in your browser only
+- No data is sent to any server except OpenAI's API
+- You can clear your API key anytime by clearing browser data
+
 ## Tips
 
 - Use the **Generate Current Timestamp** button to automatically create properly formatted timestamps
 - Pre-filled fields contain common default values - modify as needed
 - The form remembers your input until you click "Reset Form"
 - Downloaded files are automatically named based on the domain (e.g., `siri_chatgpt_bug_radar.md`)
+- **AI generation works best** when you provide detailed Issue Description, Domain, and Utterance
 
 ## Browser Compatibility
 
@@ -119,10 +154,9 @@ For issues or questions about the Siri defect report format, refer to the intern
 
 ## License
 
-Chu Yen Ly 
-
+Internal tool for Apple Siri QA testing.
 
 ---
 
-**Version**: 1.0.0 
+**Version**: 1.0.0  
 **Last Updated**: April 2026

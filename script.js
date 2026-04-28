@@ -18,11 +18,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const domainField = document.getElementById('domain');
     const utteranceField = document.getElementById('utterance');
     const autoGenerateBtn = document.getElementById('autoGenerateBtn');
+    const apiKeyField = document.getElementById('apiKey');
+    
+    // Load API key from localStorage
+    const savedApiKey = localStorage.getItem('openai_api_key');
+    if (savedApiKey) {
+        apiKeyField.value = savedApiKey;
+    }
+    
+    // Save API key when it changes
+    apiKeyField.addEventListener('blur', function() {
+        if (apiKeyField.value.trim()) {
+            localStorage.setItem('openai_api_key', apiKeyField.value.trim());
+        }
+    });
     
     // Auto-generate button click
-    autoGenerateBtn.addEventListener('click', function() {
-        autoGenerateFields(true);
-        showSuccessMessage('Fields auto-generated successfully!');
+    autoGenerateBtn.addEventListener('click', async function() {
+        const apiKey = apiKeyField.value.trim();
+        
+        if (!apiKey) {
+            alert('Please enter your OpenAI API Key first.');
+            return;
+        }
+        
+        autoGenerateBtn.disabled = true;
+        autoGenerateBtn.textContent = 'Generating with AI...';
+        
+        try {
+            await autoGenerateFields(true, apiKey);
+            showSuccessMessage('Fields auto-generated successfully with AI!');
+        } catch (error) {
+            alert('Error generating with AI: ' + error.message);
+        } finally {
+            autoGenerateBtn.disabled = false;
+            autoGenerateBtn.textContent = 'Auto-Generate Summary & Results';
+        }
     });
     
     // Auto-fill when Issue Description changes (blur event)
@@ -30,28 +61,42 @@ document.addEventListener('DOMContentLoaded', function() {
         autoGenerateFields(false);
     });
     
-    function autoGenerateFields(forceOverwrite = false) {
+    async function autoGenerateFields(forceOverwrite = false, apiKey = null) {
         const issueDesc = titleDescriptionField.value.trim();
         if (!issueDesc) {
             alert('Please enter an Issue Description first.');
             return;
         }
         
-        // Auto-fill Summary
+        const domain = domainField.value.trim();
+        const utterance = utteranceField.value.trim();
+        
+        // If API key is provided, use ChatGPT to generate natural language
+        if (apiKey && forceOverwrite) {
+            try {
+                const results = await generateWithChatGPT(issueDesc, domain, utterance, apiKey);
+                
+                summaryField.value = results.summary;
+                actualResultsField.value = results.actualResults;
+                expectedResultsField.value = results.expectedResults;
+                
+                return;
+            } catch (error) {
+                console.error('ChatGPT generation failed:', error);
+                // Fall back to simple generation
+            }
+        }
+        
+        // Simple auto-fill (fallback or when no API key)
         if (!summaryField.value.trim() || forceOverwrite) {
             summaryField.value = issueDesc + '.';
         }
         
-        // Auto-fill Actual Results
         if (!actualResultsField.value.trim() || forceOverwrite) {
             actualResultsField.value = issueDesc + '.';
         }
         
-        // Auto-fill Expected Results
         if (!expectedResultsField.value.trim() || forceOverwrite) {
-            const domain = domainField.value.trim();
-            const utterance = utteranceField.value.trim();
-            
             if (domain && utterance) {
                 expectedResultsField.value = `Siri should successfully process the request "${utterance}" and provide the expected ${domain} response.`;
             } else if (domain) {
@@ -60,6 +105,66 @@ document.addEventListener('DOMContentLoaded', function() {
                 expectedResultsField.value = `Siri should successfully process the request and provide the expected response.`;
             }
         }
+    }
+    
+    // Generate natural language descriptions using ChatGPT API
+    async function generateWithChatGPT(issueDesc, domain, utterance, apiKey) {
+        const prompt = `You are a QA engineer writing a defect report for Siri testing. Based on the following information, generate professional, clear descriptions:
+
+Issue: ${issueDesc}
+Domain: ${domain || 'N/A'}
+Utterance: ${utterance || 'N/A'}
+
+Please provide:
+1. Summary: A concise one-sentence summary of the issue
+2. Actual Results: A detailed description of what actually happened (the bug/issue)
+3. Expected Results: A detailed description of what should have happened
+
+Format your response as JSON:
+{
+  "summary": "...",
+  "actualResults": "...",
+  "expectedResults": "..."
+}`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a professional QA engineer specializing in Siri testing. Generate clear, concise, and professional defect report descriptions.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 500
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'API request failed');
+        }
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+        
+        // Parse JSON response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+        
+        throw new Error('Failed to parse ChatGPT response');
     }
 
     // Generate timestamp in the required format
